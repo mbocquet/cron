@@ -1,0 +1,71 @@
+---
+# tasks file for cron
+- name: "randomize times"
+  set_fact:
+    # non idempotent version
+    # line: "{{ 59 | random() }} \1"
+    # idempotent version for Ansible >= 2.3
+    # line: "{{ 59 | random(seed=inventory_hostname) }} \1"
+    # idempotent version for Ansible < 2.3
+    cron_hourly_minutes: "{{ (inventory_hostname|hash|list|map('int',0,16)|sum)%60 }}"
+    cron_daily_minutes: "{{ (inventory_hostname|hash|list|map('int',0,16)|sum)%60 }}"
+    cron_weekly_minutes: "{{ (inventory_hostname|hash|list|map('int',0,16)|sum)%60 }}"
+    cron_monthly_minutes: "{{ (inventory_hostname|hash|list|map('int',0,16)|sum)%60 }}"
+    cron_dwm_hour: "{{ (inventory_hostname|hash|list|map('int',0,16)|sum)%cron_hour_duration+cron_hour_start }}"
+  tags:
+    - cron
+    - randomize
+
+- name: "debug"
+  debug:
+    var: cron_hour_duration, cron_dwm_hour
+  tags:
+    - cron
+    - debug
+
+- name: "hourly"
+  lineinfile:
+    path: '{{ cron_main_crontab }}'
+    regexp: '^\d+\s+(.*cron.hourly)$'
+    line: '{{ cron_hourly_minutes }} \1'
+    backrefs: yes
+  tags:
+    - cron
+    - hourly
+
+- name: "daily"
+  lineinfile:
+    path: '{{ cron_main_crontab }}'
+    regexp: '^(\d+\s+)\d+(\s+.*daily.*)'
+    line: '{{ cron_daily_minutes }} {{ cron_dwm_hour }}\2'
+    state: present
+    backrefs: yes
+    backup: yes
+  tags:
+    - cron
+    - daily
+
+- name: "weekly"
+  lineinfile:
+    path: '{{ cron_main_crontab }}'
+    regexp: '^(\d+\s+)\d+(\s+.*weekly.*)'
+    line: '{{ cron_weekly_minutes }} {{ cron_dwm_hour }}\2'
+    state: present
+    backrefs: yes
+    backup: yes
+  tags:
+    - cron
+    - weekly
+
+- name: "monthly"
+  lineinfile:
+    path: '{{ cron_main_crontab }}'
+    regexp: '^(\d+\s+)\d+(\s+.*monthly.*)'
+    line: '{{ cron_monthly_minutes }} {{ cron_dwm_hour }}\2'
+    state: present
+    backrefs: yes
+    backup: yes
+  tags:
+    - cron
+    - monthly
+...
