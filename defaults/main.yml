@@ -1,9 +1,9 @@
 ---
 # defaults file for cron
 # default system cron file
-cron_main_crontab: '/etc/crontab'
+# cron_main_crontab: '/etc/crontab'
 # default maintenance window start hour (24h format)
-cron_hour_start: 4
+# cron_hour_start: 4
 # default maintenance window in hours (24h format)
-cron_hour_duration: 2
+# cron_hour_duration: 2
 ...

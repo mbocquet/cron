@@ -12,59 +12,77 @@
     cron_weekly_minutes: "{{ (inventory_hostname|hash|list|map('int',0,16)|sum)%60 }}"
     cron_monthly_minutes: "{{ (inventory_hostname|hash|list|map('int',0,16)|sum)%60 }}"
     cron_dwm_hour: "{{ (inventory_hostname|hash|list|map('int',0,16)|sum)%cron_hour_duration+cron_hour_start }}"
+  when:
+    - cron_hour_start is defined
+    - cron_hour_duration is defined
   tags:
     - cron
     - randomize
 
-- name: "debug"
-  debug:
-    var: cron_hour_duration, cron_dwm_hour
-  tags:
-    - cron
-    - debug
+# - name: "debug"
+#   debug:
+#     var: cron_hour_duration, cron_dwm_hour
+#   when:
+#     - cron_hour_start is defined
+#     - cron_hour_duration is defined
+#   tags:
+#     - cron
+#     - debug
 
 - name: "hourly"
   lineinfile:
-    path: '{{ cron_main_crontab }}'
+    path: '{{ cron_main_crontab | default("/etc/crontab") }}'
     regexp: '^\d+\s+(.*cron.hourly)$'
     line: '{{ cron_hourly_minutes }} \1'
     backrefs: yes
+  when:
+    - cron_hour_start is defined
+    - cron_hour_duration is defined
   tags:
     - cron
     - hourly
 
 - name: "daily"
   lineinfile:
-    path: '{{ cron_main_crontab }}'
+    path: '{{ cron_main_crontab | default("/etc/crontab") }}'
     regexp: '^(\d+\s+)\d+(\s+.*daily.*)'
     line: '{{ cron_daily_minutes }} {{ cron_dwm_hour }}\2'
     state: present
     backrefs: yes
     backup: yes
+  when:
+    - cron_hour_start is defined
+    - cron_hour_duration is defined
   tags:
     - cron
     - daily
 
 - name: "weekly"
   lineinfile:
-    path: '{{ cron_main_crontab }}'
+    path: '{{ cron_main_crontab | default("/etc/crontab") }}'
     regexp: '^(\d+\s+)\d+(\s+.*weekly.*)'
     line: '{{ cron_weekly_minutes }} {{ cron_dwm_hour }}\2'
     state: present
     backrefs: yes
     backup: yes
+  when:
+    - cron_hour_start is defined
+    - cron_hour_duration is defined
   tags:
     - cron
     - weekly
 
 - name: "monthly"
   lineinfile:
-    path: '{{ cron_main_crontab }}'
+    path: '{{ cron_main_crontab | default("/etc/crontab") }}'
     regexp: '^(\d+\s+)\d+(\s+.*monthly.*)'
     line: '{{ cron_monthly_minutes }} {{ cron_dwm_hour }}\2'
     state: present
     backrefs: yes
     backup: yes
+  when:
+    - cron_hour_start is defined
+    - cron_hour_duration is defined
   tags:
     - cron
     - monthly
